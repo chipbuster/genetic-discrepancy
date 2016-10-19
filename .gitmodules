@@ -1,0 +1,3 @@
+[submodule "src/blis"]
+	path = src/blis
+	url = git@github.com:flame/blis.git
