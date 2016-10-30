@@ -1,3 +1,13 @@
+TL;DR set variables in sourceme.sh, source that, run make, then go into
+tests and run one of the run_bl_dgemm scripts.
+
+
+
+
+
+
+
+
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
                 ____  _     ___ ____  _       _     
