@@ -20,8 +20,8 @@ echo "];"
 
 #Multi Thread
 export KMP_AFFINITY=compact  #Rule to bind core to thread for OMP thread with Intel compiler for parallel version
-export OMP_NUM_THREADS=10     #Set OMP number of threads for parallel version
-export BLISLAB_IC_NT=10       #Set BLISLAB number of threads for parallel version
+export OMP_NUM_THREADS=8     #Set OMP number of threads for parallel version
+export BLISLAB_IC_NT=8       #Set BLISLAB number of threads for parallel version
 k_start=64
 k_end=4096
 k_blocksize=64
