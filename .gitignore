@@ -65,6 +65,7 @@ tags
 *.lo
 *.o
 *.obj
+*.x
 
 # Precompiled Headers
 *.gch
@@ -151,7 +152,6 @@ CTestTestfile.cmake
 
 ### Git ###
 *.orig
-
 
 ### Mercurial ###
 .hg/
