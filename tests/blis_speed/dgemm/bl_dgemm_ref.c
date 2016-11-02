@@ -51,6 +51,7 @@
 
 #include <bl_dgemm.h>
 #include <bl_dgemm_ref.h>
+#include <mkl.h>
 
 #ifdef USE_BLAS
 /* 
@@ -87,8 +88,10 @@ void bl_dgemm_ref(
     beg = omp_get_wtime();
 
 #ifdef USE_BLAS
-    dgemm_( "N", "N", &m, &n, &k, &alpha,
-            XA, &lda, XB, &ldb, &beta, XC, &ldc );
+    cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
+               m,n,k, alpha, XA, lda, XB, ldb, beta, XC, ldc);
+//    dgemm_( "N", "N", &m, &n, &k, &alpha,
+//           XA, &lda, XB, &ldb, &beta, XC, &ldc );
 #else
     #pragma omp parallel for private( i, p )
     for ( j = 0; j < n; j ++ ) {
