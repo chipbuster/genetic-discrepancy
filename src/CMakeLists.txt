@@ -41,10 +41,14 @@ endif(NOT BLIS_ARCH IN_LIST BLIS_VALID_ARCHITECTURES)
 ExternalProject_Add(BLIS
   ## Configure phase commands
   SOURCE_DIR "${BLIS_SOURCE_DIR}"
-  CONFIGURE_COMMAND "${BLIS_SOURCE_DIR}/configure" "--prefix=${BLIS_PREFIX}" --enable-cblas --enable-blas --enable-verbose-make --enable-shared --enable-static ${BLIS_ARCH}
+  CONFIGURE_COMMAND "${BLIS_SOURCE_DIR}/configure" "--prefix=${BLIS_PREFIX}"
+  --disable-cblas --disable-blas
+  --enable-verbose-make
+  --enable-shared --enable-static
+  ${BLIS_ARCH}
 
   ## Build phase commands
-  BUILD_COMMAND make -j8
+  BUILD_COMMAND make
 
   ## Install phase commands
   INSTALL_COMMAND make install
@@ -56,4 +60,7 @@ ExternalProject_Add(BLIS
 ## BUILD OUR CODE ##
 ####################
 
-### Build 
+#include_directories("${PROJECT_SOURCE_DIR}/include")
+
+### Build base code
+#add_executable("${PROJECT_SOURCE_DIR}/base/star-discrepancy.cpp")
