@@ -8,3 +8,10 @@ SB  Compile command: icc -O3 -g -p star-discrepancy.cpp -o sandy-discrep.x -xAVX
 
 Steps to run:
   - Run build-bin-sb.sh from stampede-main and build-bin-knl.sh from stampede-knl
+  - Run distribute-binaries.sh to distribute executables into appropriate directories
+  - sbatch the sh file in each directory in the tests
+       The script will run the analysis on the file in the directory for M= 1e3, 1e4, and 1e5 
+       The program outputs will be stored in $M.out
+       The stdouts (with timing info) will be in $M-stdout.log
+       The total times (from time command) will be in the job output.
+       gmon.out (for profiling info) will be for M=1e5.
