@@ -5,3 +5,6 @@ KNL Compile command: icc -O3 -g -p star-discrepancy.cpp -o knl-discrep.x -xMIC-A
 SB  Compile command: icc -O3 -g -p star-discrepancy.cpp -o sandy-discrep.x -xAVX -std=c++11 -I ../include -qopenmp
 
 (need to load cxx11/4.9.1 to compile on sandybridge)
+
+Steps to run:
+  - Run build-bin-sb.sh from stampede-main and build-bin-knl.sh from stampede-knl
