@@ -1,5 +1,5 @@
 Tests for runspeed of base naive code using built in timing flags
-for commit 4f5c5e15963278b65b6bdff4eb1eb1e1280e875b
+based on commit ff15845e6f5f7442ec1097e998234d9ac0d89bc8
 
 KNL Compile command: icc -O3 -g -p star-discrepancy.cpp -o knl-discrep.x -xMIC-AVX512 -std=c++11 -I ../include -qopenmp
 SB  Compile command: icc -O3 -g -p star-discrepancy.cpp -o sandy-discrep.x -xAVX -std=c++11 -I ../include -qopenmp
