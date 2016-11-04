@@ -8,7 +8,7 @@
 #SBATCH -N 1
 #SBATCH -A A-ti3
 
-MVALUES=(1000 10000 100000 1000000)
+MVALUES=(1000 10000 100000)
 THREADCT=16
 PROGNAME=sb-discrep.x
 
@@ -21,6 +21,6 @@ export KMP_AFFINITY=compact
 
 for M in ${MVALUES[@]}; do
   echo "Running $M"
-  time ./$PROGNAME $DATAFILE $THREADCT ${M}.out &> ${M}-stdout.log
+  time ./$PROGNAME $DATAFILE $THREADCT ${M}.out ${M} &> ${M}-stdout.log
   echo "-------"
 done

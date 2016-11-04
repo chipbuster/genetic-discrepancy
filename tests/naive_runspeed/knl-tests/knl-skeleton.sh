@@ -8,7 +8,7 @@
 #SBATCH -N 1
 #SBATCH -A A-ti3
 
-MVALUES=(1000 10000 100000 1000000)
+MVALUES=(1000 10000 100000)
 THREADCT=68
 PROGNAME=knl-discrep.x
 
@@ -19,6 +19,6 @@ export KMP_AFFINITY=balanced
 
 for M in ${MVALUES[@]}; do
   echo "Running M=$M"
-  time ./$PROGNAME $DATAFILE $THREADCT ${M}.out &> ${M}-stdout.log
+  time ./$PROGNAME $DATAFILE $THREADCT ${M}.out ${M} &> ${M}-stdout.log
   echo "----------"
 done
