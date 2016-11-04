@@ -30,7 +30,7 @@ INIT_TIMER(cpp);
 /**
  * Randomly generates points according to Lemma 1.1 of M Shah paper.
  */
-void genPoints(float *inp, float *outp,
+void genPoints(float *inp, bool *inout, float *outp, bool *out_inout,
                unsigned int inN, unsigned int outM, unsigned int d) {
   // Set up random number generator
   std::random_device rd;
@@ -43,23 +43,46 @@ void genPoints(float *inp, float *outp,
       // Get random x cord
       unsigned int ii = dis(rd);
       outp[i * d + j] = inp[ii * d + j];
+      out_inout[i * d + j] = inout[ii * d + j];
     }
   }
 }
 
-unsigned int calcFitness(const float* P, const float* B,
+/**
+ * Calculate fitness, according to Shah genetic algorithm:
+ *
+ * @param P input points, n x d
+ * @param B input potential boxes, m x d
+ * @param inout boolean values for whether B[i][j] should be inclusive or 
+ *          exclusive, m x d
+ * @param n dim of P
+ * @param M dim of B (and inout)
+ * @param d matching dim of P and B
+ * @param m the maximum entry of P or B
+ * @param fitness output vector of size m that has fitness values for each m 
+ *          input boxes
+ * @param max_D output maxiumum discrepancy value
+ * @param max_pos output maximum fitness location
+ */
+unsigned int calcFitness(const float* P, const float* B, const bool* inout,
                          unsigned int n, unsigned int M, int d, unsigned int m,
                          float* fitness, float *max_D, unsigned int *max_pos) {
 
   double total_g = 0;
-  int print_count = 0;
-#pragma omp parallel for reduction(+:total_g)
+  unsigned int nr = 0;
+#pragma omp parallel
+{
+#pragma omp for reduction(+:total_g)
     for (unsigned int i = 0; i < M; ++i) {
       int SSum = 0;
       for (unsigned int j = 0; j < n; ++j) {
         bool Csub = true;
         for (int k = 0; k < d; ++k) {
-          Csub &= P[j*d + k] <= B[i*d + k];
+          if (inout[i*d + k]) {
+            Csub &= P[j*d + k] < B[i*d + k];
+          } else {
+            Csub &= P[j*d + k] <= B[i*d + k];
+          }
         }
         if (Csub) SSum++;
       }
@@ -68,39 +91,58 @@ unsigned int calcFitness(const float* P, const float* B,
         volume *= B[i*d + k]/m;
       }
       float disc = std::abs(SSum/n - volume);
-#ifdef DEBUG
-      if ( (SSum > 0 && print_count++ < 5) || i < 3) {
-        fprintf(stderr,"%d: %e, %d: %f\n", i, volume, SSum, disc);
-      }
-#endif
       fitness[i] = disc;
+      total_g += disc;
     }
 
+#pragma omp barrier
+    int local_max = -1;
+    float local_max_D = -1;
+
     //Now, calculate the fitness, according to (iii) of Shah
-    *max_pos = 0;
-    unsigned int nr = 0;
+    nr = 0;
+#pragma omp for reduction(+:nr)
     for (unsigned int i = 0; i < M; ++i) {
-      if (fitness[i] > *max_D) {
-        *max_D = fitness[i];
+      // Save the discrepancy before we change it to fitness.
+      if (local_max_D < 0 || fitness[i] > local_max_D) {
+        local_max_D = fitness[i];
       }
       if (fitness[i] > 1.0/M*total_g) {
-        fitness[i] = 1.0 / pow(1 - fitness[i], 2.0);
+        fitness[i] = 1.0 / pow(1.f - fitness[i], 2.0);
         nr++;
       } else {
         fitness[i] = 0.0;
       }
-      if (fitness[i] > fitness[*max_pos]) {
-        *max_pos = i;
+      if (local_max == -1 || fitness[i] > fitness[local_max]) {
+        local_max = i;
       }
     }
+#pragma omp single
+{
+    *max_pos = 0;
+    *max_D = 0;
+} // end omp single
+#pragma omp barrier
 
+#pragma omp critical
+{
+      if (fitness[local_max] > fitness[*max_pos]) {
+        *max_pos = local_max;
+      }
+      if (local_max_D > *max_D) {
+        *max_D = local_max_D;
+      }
+} // end critical
+
+} // end omp parallel region
     return nr;
 }
 
-void moveToNew(float *from, float *to,
+void moveToNew(float *from, bool *from_inout, float *to, bool *to_inout,
                unsigned int fr_idx, unsigned int to_idx, unsigned int d) {
   for (unsigned int i = 0; i < d; ++i) {
     to[to_idx * d + i] = from[fr_idx * d + i];
+    to_inout[to_idx * d + i] = from_inout[fr_idx * d + i];
   }
 }
 
@@ -130,9 +172,9 @@ int main(int argc, char* argv[]) {
   }
  
   int nthreads = atoi(argv[2]);
-	omp_set_dynamic(0);
-	omp_set_num_threads(nthreads);
-	printf("Running with %d threads\n", omp_get_max_threads());
+  omp_set_dynamic(0);
+  omp_set_num_threads(nthreads);
+  printf("Running with %d threads\n", omp_get_max_threads());
 
   START_TIMER(cpp);
   FILE* inf = fopen(argv[1], "r");
@@ -162,11 +204,14 @@ int main(int argc, char* argv[]) {
 
   START_TIMER(cpp);
   float* BStar = new float[(2*n+1)*d];
+  bool* BStar_inout = new bool[(2*n+1)*d];
   for (unsigned int i = 0; i < n; ++i) {
     for (unsigned int j = 0; j < d; ++j) {
       BStar[2*i*d + j] = P[i*d + j];
+      BStar_inout[2*i*d + j] = true;
       // Also need to add the non-inclusive edge.
-      BStar[(2*i+1)*d + j] = P[i*d + j] - FLT_EPSILON;
+      BStar[(2*i+1)*d + j] = P[i*d + j];
+      BStar_inout[(2*i+1)*d + j] = false;
     }
   }
   for (unsigned int j = 0; j < d; ++j) {
@@ -191,8 +236,10 @@ int main(int argc, char* argv[]) {
 
   //Create B from the input P
   float* B = new float[M*d];
+  bool* B_inout = new bool[M*d];
   float* B_next = new float[M*d];
-  genPoints(BStar, B, 2*n+1, M, d);
+  bool* B_next_inout = new bool[M*d];
+  genPoints(BStar, BStar_inout, B, B_inout, 2*n+1, M, d);
   // Initial guess for D* is 0
   float best_DStar = 0, prev_DStar = 0;
   bool keep_going = true;
@@ -202,7 +249,7 @@ int main(int argc, char* argv[]) {
 
   unsigned int loop_no = 0;
 
-  while (keep_going || 1) {
+  while (keep_going) {
     //unsigned int* indices = new unsigned int[M];
     //float ds = DStarSingle(P, P_cu, n, d, m);
     //float ds = DStarBoth(P, P_cu, P, P_cu, n, n, d, m);
@@ -216,7 +263,7 @@ int main(int argc, char* argv[]) {
     unsigned int nr = 0;
     unsigned int max_f = 0;
     START_TIMER(cpp);
-    nr = calcFitness(P, B, n, M, d, m, fitness, &this_DStar, &max_f);
+    nr = calcFitness(P, B, B_inout, n, M, d, m, fitness, &this_DStar, &max_f);
     STOP_TIMER(cpp);
     PRINT_TIMER(cpp, "calculating fitness");
 
@@ -227,7 +274,7 @@ int main(int argc, char* argv[]) {
 
     if (nr == 0) {
       // Bad sample. Generate more points.
-      genPoints(BStar, B, 2*n+1, M, d);
+      genPoints(BStar, BStar_inout, B, B_inout, 2*n+1, M, d);
 #ifdef GEN_DEBUG
       fprintf(stderr,"After %u consecutive (%u total) runs, the predicted star discrepancy is %f (%f%% change)\n",
              num_runs, loop_no++, best_DStar, 0);
@@ -248,7 +295,7 @@ int main(int argc, char* argv[]) {
     // Step (vi) - clone nc boxes from r
     unsigned int nc = CLONE_PERC*nr;
     // Clone max with Pr 1
-    moveToNew(B, B_next, max_f, 0, d);
+    moveToNew(B, B_inout, B_next, B_next_inout, max_f, 0, d);
     //swap(B, fitness, max_f, 0, d);
     ++curr_count;
     // Set the best amount so far.
@@ -260,7 +307,7 @@ int main(int argc, char* argv[]) {
       if (fitness[i] == 0.f) continue;
       float r = unif_01(gen);
       if (r < minprob) {
-        moveToNew(B, B_next, i, curr_count, d);
+        moveToNew(B, B_inout, B_next, B_next_inout, i, curr_count, d);
         //swap(B, fitness, i, curr_count, d);
         ++curr_count;
       }
@@ -300,8 +347,8 @@ int main(int argc, char* argv[]) {
       // Add these two to the new list, but do crossover with them first.
       //swap(B, fitness, curr_count, idx1, d);
       //swap(B, fitness, curr_count+1, idx2, d);
-      moveToNew(B, B_next, idx1, curr_count, d);
-      moveToNew(B, B_next, idx2, curr_count+1, d);
+      moveToNew(B, B_inout, B_next, B_next_inout, idx1, curr_count, d);
+      moveToNew(B, B_inout, B_next, B_next_inout, idx2, curr_count+1, d);
 
       // Crossover randomly with probability CROSSOVER_PROB
       for (unsigned int j = 0; j < d; ++j) {
@@ -310,6 +357,9 @@ int main(int argc, char* argv[]) {
           unsigned int temp = B_next[curr_count*d + j];
           B_next[curr_count*d + j] = B_next[(curr_count+1)*d + j];
           B_next[(curr_count+1)*d + j] = temp;
+          bool temp_b = B_next_inout[curr_count*d + j];
+          B_next_inout[curr_count*d + j] = B_next_inout[(curr_count+1)*d + j];
+          B_next_inout[(curr_count+1)*d + j] = temp_b;
         }
       }
       curr_count += 2;
@@ -323,9 +373,11 @@ int main(int argc, char* argv[]) {
           tomut = unif_01(gen);
           if (tomut > MUT_PROB_ONE) {
             B_next[curr_count*d + i] = m;
+            B_next_inout[curr_count*d + i] = true;
           } else {
             unsigned int base_idx = unif_N(gen);
             B_next[curr_count*d + i] = BStar[base_idx*d + i];
+            B_next_inout[curr_count*d + i] = BStar_inout[base_idx*d + i];
           }
         }
       }
@@ -363,6 +415,7 @@ int main(int argc, char* argv[]) {
 #endif
 
     memcpy(B, B_next, M*d*sizeof(unsigned int));
+    memcpy(B_inout, B_next_inout, M*d*sizeof(bool));
     STOP_TIMER(cpp);
     PRINT_TIMER(cpp, "total time for mutations");
   }
