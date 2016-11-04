@@ -20,3 +20,14 @@ git submodule update
 ```
 
 Hey you dopes: if we ever plan to release this to public, we'll need to add GPL headers to all the source code files (see: https://www.gnu.org/licenses/gpl-howto.html)
+
+
+Develop path plan:
+
+1. Use BLIS src to benchmark raw matrix-matrix multiplication.
+   Results: about 2 TFLOPS peak for MKL, 1.5 TFLOPS peak for BLIS
+
+2. Use BLISLab to instatiate a derp kernel.
+   Ongoing in tests/fitness_kern
+
+3. Transplant BLISLab kernel into actual KNL BLIS kernel.
