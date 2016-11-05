@@ -5,6 +5,7 @@
 import sys
 import os
 import re
+import statistics
 
 knlDir = 'knl-tests'
 sbDir = 'sb-tests'
@@ -62,25 +63,65 @@ def gen_times(fname):
 
     with open(fname,'r') as infile:
         for line in infile.readlines():
+            fitnessMatch = fitnessRegex.search(line)
             mutationMatch = mutationRegex.search(line)
-            fitnessMatch = mutationRegex.search(line)
             if mutationMatch:
                 timeString = numericRegex.search(mutationMatch.group(0))
                 mutationTime = float(timeString.group(0))
                 output[0].append(mutationTime)
-            elif fitnessMatch:
+            if fitnessMatch:
                 timeString = numericRegex.search(fitnessMatch.group(0))
                 fitnessTime = float(timeString.group(0))
-                output[0].append(fitnessTime)
+                output[1].append(fitnessTime)
 
     return output
 
-if __name__ == "__main__":
-    main()
+def stats(info):
+    """Gets statistical info for a tuple of ([mutationtime],[fitnesstime])"""
+    
+    (mutation,fitness) = info
+
+    mutationStats = {}
+    fitnessStats = {}
+    
+    mutationStats["mean"] =  statistics.mean(mutation)
+    mutationStats["median"]  = statistics.median(mutation)
+    mutationStats["stdev"]  = statistics.stdev(mutation)
+
+    fitnessStats["mean"] =  statistics.mean(fitness)
+    fitnessStats["median"]  = statistics.median(fitness)
+    fitnessStats["stdev"]  = statistics.stdev(fitness)
+
+    return(mutationStats,fitnessStats)
+
+def pretty_print_info(tup):
+    """Pretty print the 4-tuple of experiment identifiers"""
+    (arch, npts, dim, M) = tup
+
+    print(arch + " with " + str(npts) + " points in " + str(dim) + " dimensions and M=" + str(M))
+
+def pretty_print_stats(pair):
+    """Pretty print the statistical results from stats()"""
+    (mut,fit) = pair
+
+    print("        Mutation \t Fitness")
+    print("Mean:   " + str(round(mut['mean'],3)) + " \t\t " + str(round(fit['mean'],3)))
+    print("Median: " + str(round(mut['median'],3)) + " \t\t " + str(round(fit['median'],3)))
+    print("Stdev:  " + str(round(mut['stdev'],3)) + " \t\t " + str(round(fit['stdev'],3)))
+    
 
 def main():
     outputs = {}
     results = get_md_dict()
     for fn in results:
-        outputs[results[fn]] = gen_times(results)
+        outputs[results[fn]] = stats(gen_times(fn))
+
+    for info in outputs:
+        pretty_print_info(info)
+        pretty_print_stats(outputs[info])
+       	print("\n\n") 
+
+if __name__ == "__main__":
+    main()
+
 
