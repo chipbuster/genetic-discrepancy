@@ -78,12 +78,12 @@ def gen_times(fname):
 
 def stats(info):
     """Gets statistical info for a tuple of ([mutationtime],[fitnesstime])"""
-    
+
     (mutation,fitness) = info
 
     mutationStats = {}
     fitnessStats = {}
-    
+
     mutationStats["mean"] =  statistics.mean(mutation)
     mutationStats["median"]  = statistics.median(mutation)
     mutationStats["stdev"]  = statistics.stdev(mutation)
@@ -108,7 +108,7 @@ def pretty_print_stats(pair):
     print("Mean:   " + str(round(mut['mean'],3)) + " \t\t " + str(round(fit['mean'],3)))
     print("Median: " + str(round(mut['median'],3)) + " \t\t " + str(round(fit['median'],3)))
     print("Stdev:  " + str(round(mut['stdev'],3)) + " \t\t " + str(round(fit['stdev'],3)))
-    
+
 
 def main():
     outputs = {}
@@ -116,12 +116,21 @@ def main():
     for fn in results:
         outputs[results[fn]] = stats(gen_times(fn))
 
+    # Print SB info
     for info in outputs:
-        pretty_print_info(info)
-        pretty_print_stats(outputs[info])
-       	print("\n\n") 
+        if info[0] == "SB":
+            pretty_print_info(info)
+            pretty_print_stats(outputs[info])
+            print("\n\n")
+
+    # Print KNL info
+    for info in outputs:
+        if info[0] == "KN":
+            pretty_print_info(info)
+            pretty_print_stats(outputs[info])
+            print("\n\n")
+
+
 
 if __name__ == "__main__":
     main()
-
-

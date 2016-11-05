@@ -161,3 +161,7 @@ CTestTestfile.cmake
 .hgsubstate
 .hgtags
 
+### Output files ###
+*.out
+*.log
+*.txt
