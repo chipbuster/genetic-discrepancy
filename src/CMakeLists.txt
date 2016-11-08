@@ -23,21 +23,26 @@ set(CMAKE_CXX_STANARD_REQUIRED ON)
 # Use new IN_LIST behavior
 cmake_policy(SET CMP0057 NEW)
 
-# Require that icc is used--important for AVX512 support!
+# Require that icc is used for release--important for AVX512 support!
 # This may be relaxed in the future if gcc supports Knight's Landing
-if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
-  message(FATAL_ERROR "Currently, the compiler for this project must be icc.\
+# Relax this requirement for non-release builds.
+
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+  if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+    message(FATAL_ERROR "In Release mode, the compiler for this project must be icc.\
     Please either load the appropriate module or manually specify CMAKE_CXX_COMPILER\
     on the command line.")
-endif(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+  endif(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
 
-# Require icc > 17.0.0 for KNL support
-if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 17.0.0)
-  message(ERROR "Your compiler version older than what is supported by this\
+  # Require icc > 17.0.0 for KNL support
+
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 17.0.0)
+    message(ERROR "Your compiler version older than what is supported by this\
     project. We will attempt to continue, but bizzare things may happen.\
     For best results, please use an icc newer than version 17.0.0. You are\
     currently using ${CMAKE_CXX_COMPILER_VERSION}")
-endif(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 17.0.0)
+  endif(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 17.0.0)
+endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 
 ########################
 ## BUILD BLIS PROJECT ##
