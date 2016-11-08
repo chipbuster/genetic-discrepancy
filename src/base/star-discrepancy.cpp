@@ -60,13 +60,13 @@ void genPoints(float *inp, bool *inout, float *outp, bool *out_inout,
  *
  * @param P input points, n x d
  * @param B input potential boxes, m x d
- * @param inout boolean values for whether B[i][j] should be inclusive or 
+ * @param inout boolean values for whether B[i][j] should be inclusive or
  *          exclusive, m x d
  * @param n dim of P
  * @param M dim of B (and inout)
  * @param d matching dim of P and B
  * @param m the maximum entry of P or B
- * @param fitness output vector of size m that has fitness values for each m 
+ * @param fitness output vector of size m that has fitness values for each m
  *          input boxes
  * @param max_D output maxiumum discrepancy value
  * @param max_pos output maximum fitness location
@@ -174,14 +174,11 @@ void swap(float *S, float *f, //unsigned int *indices,
 
 int main(int argc, char* argv[]) {
   if (argc < 2) {
-    fprintf(stderr, "usage: %s <file> <nthreads> <outfile> [M]\n", argv[0]);
+    fprintf(stderr, "usage: %s <file> <outfile> [M]\n", argv[0]);
     return -1;
   }
-  
+
  
-  int nthreads = atoi(argv[2]);
-  omp_set_dynamic(0);
-  omp_set_num_threads(nthreads);
   printf("Running with %d threads\n", omp_get_max_threads());
 
   // Set up random generator
@@ -248,8 +245,8 @@ int main(int argc, char* argv[]) {
 
   // Value of M from Shah, the initial population of the gene pool.
   unsigned int M = NUM_M;
-  if (argc == 5) {
-    M = atoi(argv[4]);
+  if (argc == 4) {
+    M = atoi(argv[3]);
   }
 
   //Create B from the input P
@@ -437,7 +434,7 @@ int main(int argc, char* argv[]) {
 
 #ifdef DEBUG
     std::stringstream ss;
-    ss << argv[3] << "_" << loop_no;
+    ss << argv[2] << "_" << loop_no;
     // Save to a file, if provided
     FILE* ofs = fopen(ss.str().c_str(), "w");
     fprintf(ofs, "%u %u %u\n", m, d, M);
@@ -461,7 +458,7 @@ int main(int argc, char* argv[]) {
 
   // Save to a file, if provided
   if (argc > 2) {
-    FILE* ofs = fopen(argv[3], "w");
+    FILE* ofs = fopen(argv[2], "w");
     fprintf(ofs, "%u %u %u\n", m, d, M);
     for (unsigned int i = 0; i < M; i++) {
       for (unsigned int j = 0; j < d; j++) {
