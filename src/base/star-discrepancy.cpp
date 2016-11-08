@@ -16,7 +16,7 @@
 #define CLONE_PERC      0.5     // percent of r boxes to clone (nc)
 #define CROSSOVER_PERC  0.6667  // percent of remaining (M - nc) boxes to clone
 #define CROSSOVER_PROB  0.5     // probability to crossover a given dimension
-#define MUTATION_PROB   0.80    // probability to mutate a given dimension
+#define MUTATION_PROB   0.80    // probab$ cd lighttpd-1.4.35-new/
 #define STOPPING_SAME   0.0001
 #define MAX_RUNS        50
 #define MUT_PROB_ONE    0.8     // probability of mutating to a 1
@@ -178,8 +178,7 @@ int main(int argc, char* argv[]) {
     return -1;
   }
 
- 
-  printf("Running with %d threads\n", omp_get_max_threads());
+  fprintf(stderr,"Running with %d threads\n", omp_get_max_threads());
 
   // Set up random generator
   // Can set the random seed by setting RANDOM_SEED as an environment variable.
@@ -454,7 +453,7 @@ int main(int argc, char* argv[]) {
     PRINT_TIMER(cpp, "total time for mutations");
   }
 
-  fprintf(stderr,"Star discrepancy after %u generations is %f\n", loop_no, best_DStar);
+  printf("Star discrepancy after %u generations is %f\n", loop_no, best_DStar);
 
   // Save to a file, if provided
   if (argc > 2) {

@@ -107,3 +107,13 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 
 ### Build base code
 add_executable(stardiscrep-noaccel "${PROJECT_SOURCE_DIR}/base/star-discrepancy.cpp")
+
+####################
+## RUN SOME TESTS ##
+####################
+
+enable_testing()
+
+add_test(basic_correctness "${PROJECT_SOURCE_DIR}/../tests/simple_correctness/run_simple_correctness_test.sh"
+  "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/stardiscrep-noaccel"
+  "${PROJECT_SOURCE_DIR}/../tests/simple_correctness/reference_output)
