@@ -4,10 +4,11 @@
 #include <cfloat>
 #include <cstdio>
 #include <cstring>
-#include <cfloat>
+#include <ctime> // time(NULL)
+#include <cfloat> // max float
 #include <iostream>
-#include <omp.h>
-#include <random>
+#include <omp.h> // parallelization
+#include <random> // random numbers
 #include <sstream>
 
 #include "timer.h"
@@ -27,25 +28,31 @@
 //#define GEN_DEBUG
 INIT_TIMER(cpp);
 
+// Global random generator.
+std::mt19937 gen;
+
+// Print out some stuff about the random numbers we generate.
+#define RANDOM_CHECK 0
+
 /**
  * Randomly generates points according to Lemma 1.1 of M Shah paper.
  */
 void genPoints(float *inp, bool *inout, float *outp, bool *out_inout,
                unsigned int inN, unsigned int outM, unsigned int d) {
   // Set up random number generator
-  std::random_device rd;
   std::uniform_int_distribution<uint> dis(0, inN - 1);
-  // Not sure what this generator is, but it seems to be the default
-  std::mt19937 gen(rd());
 
+  if (RANDOM_CHECK) printf("rand genPoints:");
   for (unsigned int i = 0; i < outM; i++) {
     for (unsigned int j = 0; j < d; j++) {
       // Get random x cord
-      unsigned int ii = dis(rd);
+      unsigned int ii = dis(gen);
+      if (RANDOM_CHECK) printf(" %u", ii);
       outp[i * d + j] = inp[ii * d + j];
       out_inout[i * d + j] = inout[ii * d + j];
     }
   }
+  if (RANDOM_CHECK) printf("\n");
 }
 
 /**
@@ -170,11 +177,23 @@ int main(int argc, char* argv[]) {
     fprintf(stderr, "usage: %s <file> <nthreads> <outfile> [M]\n", argv[0]);
     return -1;
   }
+  
  
   int nthreads = atoi(argv[2]);
   omp_set_dynamic(0);
   omp_set_num_threads(nthreads);
   printf("Running with %d threads\n", omp_get_max_threads());
+
+  // Set up random generator
+  // Can set the random seed by setting RANDOM_SEED as an environment variable.
+  if (const char* env_p = std::getenv("RANDOM_SEED")) {
+    unsigned seed = atoi(env_p);
+    printf("Using random seed %u\n", seed);
+    gen = std::mt19937(seed);
+  } else {
+    std::random_device rd;
+    gen = std::mt19937(rd());
+  }
 
   START_TIMER(cpp);
   FILE* inf = fopen(argv[1], "r");
@@ -222,7 +241,6 @@ int main(int argc, char* argv[]) {
 
   // Create a uniform generator from 0-1
   std::uniform_real_distribution<double> unif_01(0.0,1.0);
-  std::default_random_engine gen;
   // Create uniform sampler for number of dimensions.
   std::uniform_int_distribution<uint> unif_d(0, d - 1);
   // Generate a sample from the base gene pool, which is 2*n+1
@@ -303,23 +321,29 @@ int main(int argc, char* argv[]) {
     // Clone the additional nc - 1 boxes from R (boxes in B that don't have f=0)
     // Clone with uniform probability of 1/nr
     float minprob = 1.0/nr;
+    if (RANDOM_CHECK) printf("clone prob:");
     for (unsigned int i = 0; i < M && curr_count < nc; ++i) {
       if (fitness[i] == 0.f) continue;
       float r = unif_01(gen);
+      if (RANDOM_CHECK) printf(" %f", r);
       if (r < minprob) {
         moveToNew(B, B_inout, B_next, B_next_inout, i, curr_count, d);
         //swap(B, fitness, i, curr_count, d);
         ++curr_count;
       }
     }
+    if (RANDOM_CHECK) printf("\n");
+
     // (vii) Crossover nx = 67% of (M - nc)
     unsigned int nx = CROSSOVER_PERC * (M - curr_count);
     std::uniform_int_distribution<uint> unif_nr(0, nr - 1);
+    if (RANDOM_CHECK) printf("crossover prob:\n");
     // Crossover happens two at a time.
     for (unsigned int i = 0; i < nx; i += 2) {
       // Get the random positions for crossover
       uint r1 = unif_nr(gen);
       uint r2 = unif_nr(gen);
+      if (RANDOM_CHECK) printf("  %d,%d: ", r1, r2);
       //fprintf(stderr, "Looking for positions %u and %u (out of %u, M=%u, nr=%u, max=%u)\n",
       //        r1, r2, nx, M, nr, max_pos);
       // Need indices for each of these, but skip over the zero-valued ones.
@@ -350,9 +374,11 @@ int main(int argc, char* argv[]) {
       moveToNew(B, B_inout, B_next, B_next_inout, idx1, curr_count, d);
       moveToNew(B, B_inout, B_next, B_next_inout, idx2, curr_count+1, d);
 
+      if (RANDOM_CHECK) printf("[");
       // Crossover randomly with probability CROSSOVER_PROB
       for (unsigned int j = 0; j < d; ++j) {
         float tocross = unif_01(gen);
+        if (RANDOM_CHECK) printf("%f, ", tocross);
         if (tocross < CROSSOVER_PROB) {
           unsigned int temp = B_next[curr_count*d + j];
           B_next[curr_count*d + j] = B_next[(curr_count+1)*d + j];
@@ -362,26 +388,37 @@ int main(int argc, char* argv[]) {
           B_next_inout[(curr_count+1)*d + j] = temp_b;
         }
       }
+      if (RANDOM_CHECK) printf("]\n");
       curr_count += 2;
     }
 
     // Now, need to just do mutations on the remaining M - nc - nx boxes.
+    if (RANDOM_CHECK) printf("mutations:");
     for (; curr_count < M; ++curr_count) {
       for (unsigned int i = 0; i < d; ++i) {
         float tomut = unif_01(gen);
+        if (RANDOM_CHECK) printf(" %f", tomut);
         if (tomut < MUTATION_PROB) {
           tomut = unif_01(gen);
+          if (RANDOM_CHECK) printf(",%f", tomut);
           if (tomut > MUT_PROB_ONE) {
+            if (RANDOM_CHECK) printf(",NA");
             B_next[curr_count*d + i] = m;
             B_next_inout[curr_count*d + i] = true;
           } else {
             unsigned int base_idx = unif_N(gen);
+            if (RANDOM_CHECK) printf(",%u", base_idx);
+            printf("%u ", base_idx);
             B_next[curr_count*d + i] = BStar[base_idx*d + i];
             B_next_inout[curr_count*d + i] = BStar_inout[base_idx*d + i];
           }
+        } else {
+          if (RANDOM_CHECK) printf(",NA,NA");
         }
       }
     }
+    if (RANDOM_CHECK) printf("\n");
+    printf("\n");
 
     float perc_change = (best_DStar - prev_DStar) / best_DStar;
     if ( perc_change < STOPPING_SAME) {
