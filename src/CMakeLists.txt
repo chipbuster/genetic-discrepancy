@@ -9,12 +9,12 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Set OpenMP
-FIND_PACKAGE( OpenMP REQUIRED)
-if(OPENMP_FOUND)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-endif(OPENMP_FOUND)
+#FIND_PACKAGE( OpenMP REQUIRED)
+#if(OPENMP_FOUND)
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+#endif(OPENMP_FOUND)
 
 # Require C++11 to be used
 set(CMAKE_CXX_STANDARD 11)
@@ -22,6 +22,10 @@ set(CMAKE_CXX_STANARD_REQUIRED ON)
 
 # Use new IN_LIST behavior
 cmake_policy(SET CMP0057 NEW)
+
+################################
+## CHECK COMPILER INFORMATION ##
+################################
 
 # Require that icc is used for release--important for AVX512 support!
 # This may be relaxed in the future if gcc supports Knight's Landing
@@ -43,6 +47,13 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     currently using ${CMAKE_CXX_COMPILER_VERSION}")
   endif(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 17.0.0)
 endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+
+# Explicity disallow the use of GCC--it fails with random number generation fixation
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  message(FATAL_ERROR "Due to issues with random number generation, gcc cannot\
+  be used to compile this code. Please use an alternate compiler like\
+  intel or clang.")
+endif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
 ########################
 ## BUILD BLIS PROJECT ##
@@ -116,4 +127,4 @@ enable_testing()
 
 add_test(basic_correctness "${PROJECT_SOURCE_DIR}/../tests/simple_correctness/run_simple_correctness_test.sh"
   "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/stardiscrep-noaccel"
-  "${PROJECT_SOURCE_DIR}/../tests/simple_correctness/reference_output)
+  "${PROJECT_SOURCE_DIR}/../data")

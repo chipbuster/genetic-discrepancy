@@ -82,8 +82,11 @@ def main(args):
     refFileList = os.listdir(refdir)
 
     # All files to be tested should have corresponding entries in the reference
-    if not all(x in refFileList for x in testFileList):
+
+    missingFiles = set(testFileList).difference(set(refFileList))
+    if missingFiles:
         print("Some of the files in " + outdir + " are not in " + refdir)
+        print(missingFiles)
         sys.exit(1)
 
     if "-s" in args or "--silent" in args:

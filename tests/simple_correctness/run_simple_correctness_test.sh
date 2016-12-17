@@ -11,15 +11,14 @@ DATADIR="$(readlink --canonicalize-existing "$2")"
 OUTPUT_DIR=/tmp/test_output
 TESTSCRDIR="$(dirname "$(readlink --canonicalize-existing "$0")")" #directory of this script
 
-
 M=50 #For relatively fast tests!
 
-mkdir -p "$OUTPUT_DIR"
+OUTPUT_DIR="$(mktemp -d)"
 
 for data_file in "$DATADIR"/*; do
     echo "Running program on $data_file"
-    echo  "$TEST_PROGRAM $data_file ${OUTPUT_DIR}/$(basename "$data_file").out $M"
-    "$TEST_PROGRAM" "$data_file" "${OUTPUT_DIR}/$(basename "$data_file").out" "$M" &> /dev/null
+    echo  "RANDOM_SEED=0 $TEST_PROGRAM $data_file ${OUTPUT_DIR}/$(basename "$data_file").out $M"
+    RANDOM_SEED=0 "$TEST_PROGRAM" "$data_file" "${OUTPUT_DIR}/$(basename "$data_file").out" "$M" &> /dev/null
 done
 
 "${TESTSCRDIR}/"test_correctness.sh "$OUTPUT_DIR"

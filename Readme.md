@@ -31,3 +31,7 @@ Develop path plan:
    Ongoing in tests/fitness_kern
 
 3. Transplant BLISLab kernel into actual KNL BLIS kernel.
+
+## Other notes:
+
+Use environmental variable RANDOM\_SEED to set a seed. Else it will use a system gen.
