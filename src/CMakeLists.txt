@@ -48,13 +48,6 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
   endif(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 17.0.0)
 endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 
-# Explicity disallow the use of GCC--it fails with random number generation fixation
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  message(FATAL_ERROR "Due to issues with random number generation, gcc cannot\
-  be used to compile this code. Please use an alternate compiler like\
-  intel or clang.")
-endif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-
 ########################
 ## BUILD BLIS PROJECT ##
 ########################

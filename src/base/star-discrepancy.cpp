@@ -193,9 +193,6 @@ int main(int argc, char* argv[]) {
 
   START_TIMER(cpp);
   FILE* inf = fopen(argv[1], "r");
-  //FILE* inf = fopen("C:/Users/Nathan Clement/Documents/gpu/gpu_code/samples.m1k.d128.n10k.uniform", "r");
-  //FILE* inf = fopen("C:/Users/Nathan Clement/Documents/gpu/gpu_code/samples.m1k.d32.n1m.uniform", "r");
-  //FILE* inf = fopen("C:/Users/Nathan Clement/Documents/gpu/gpu_code/samples.m1000.d10.n10k.prgn", "r");
 
   if (!inf) {
     perror("Could not open input file");
@@ -220,6 +217,8 @@ int main(int argc, char* argv[]) {
   START_TIMER(cpp);
   float* BStar = new float[(2*n+1)*d];
   bool* BStar_inout = new bool[(2*n+1)*d];
+  memset(BStar, 0, sizeof(float) * (2*n+1)*d);
+  memset(BStar_inout, 0, sizeof(bool) * (2*n+1)*d);
   for (unsigned int i = 0; i < n; ++i) {
     for (unsigned int j = 0; j < d; ++j) {
       BStar[2*i*d + j] = P[i*d + j];
@@ -253,6 +252,13 @@ int main(int argc, char* argv[]) {
   bool* B_inout = new bool[M*d];
   float* B_next = new float[M*d];
   bool* B_next_inout = new bool[M*d];
+
+  // Initialize the memory to appease the great Valgrind
+  memset(B, 0, sizeof(float) * M * d);
+  memset(B_next, 0, sizeof(float) * M * d);
+  memset(B_inout, 0, sizeof(bool) * M * d);
+  memset(B_next_inout, 0, sizeof(bool) * M * d);
+
   genPoints(BStar, BStar_inout, B, B_inout, 2*n+1, M, d);
   // Initial guess for D* is 0
   float best_DStar = 0, prev_DStar = 0;
