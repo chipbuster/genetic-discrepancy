@@ -32,7 +32,7 @@ INIT_TIMER(cpp);
 std::mt19937 gen;
 
 // Print out some stuff about the random numbers we generate.
-#define RANDOM_CHECK 0
+#define RANDOM_CHECK 1
 
 /**
  * Randomly generates points according to Lemma 1.1 of M Shah paper.
@@ -178,7 +178,7 @@ int main(int argc, char* argv[]) {
     return -1;
   }
 
-  fprintf(stderr,"Running with %d threads\n", omp_get_max_threads());
+//  fprintf(stderr,"Running with %d threads\n", omp_get_max_threads());
 
   // Set up random generator
   // Can set the random seed by setting RANDOM_SEED as an environment variable.
