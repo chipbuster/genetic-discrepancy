@@ -13,6 +13,8 @@
 
 #include "timer.h"
 
+typedef unsigned int uint;
+
 #define CLONE_PERC      0.5     // percent of r boxes to clone (nc)
 #define CROSSOVER_PERC  0.6667  // percent of remaining (M - nc) boxes to clone
 #define CROSSOVER_PROB  0.5     // probability to crossover a given dimension
@@ -77,7 +79,7 @@ unsigned int calcFitness(const float* P, const float* B, const bool* inout,
 
   double total_g = 0;
   unsigned int nr = 0;
-#pragma omp parallel
+#pragma omp parallel shared(nr)
 {
 #pragma omp for reduction(+:total_g)
     for (unsigned int i = 0; i < M; ++i) {
@@ -107,7 +109,6 @@ unsigned int calcFitness(const float* P, const float* B, const bool* inout,
     float local_max_D = -1;
 
     //Now, calculate the fitness, according to (iii) of Shah
-    nr = 0;
 #pragma omp for reduction(+:nr)
     for (unsigned int i = 0; i < M; ++i) {
       // Save the discrepancy before we change it to fitness.
@@ -177,6 +178,10 @@ int main(int argc, char* argv[]) {
     fprintf(stderr, "usage: %s <file> <outfile> [M]\n", argv[0]);
     return -1;
   }
+
+#pragma omp parallel 
+#pragma omp single
+  printf("Running with %d threads\n", omp_get_num_threads());
 
 //  fprintf(stderr,"Running with %d threads\n", omp_get_max_threads());
 
@@ -285,6 +290,7 @@ int main(int argc, char* argv[]) {
     START_TIMER(cpp);
     nr = calcFitness(P, B, B_inout, n, M, d, m, fitness, &this_DStar, &max_f);
     STOP_TIMER(cpp);
+    fprintf(stderr,"\n");
     PRINT_TIMER(cpp, "calculating fitness");
 
     fprintf(stderr, "Found max_f at position %u and nr of %u\n", max_f, nr);
