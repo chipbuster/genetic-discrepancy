@@ -79,8 +79,10 @@ unsigned int calcFitness(const float* P, const float* B, const bool* inout,
 
   double total_g = 0;
   unsigned int nr = 0;
-#pragma omp parallel shared(nr)
+#pragma omp parallel shared(nr) shared(total_g)
 {
+  total_g = 0;
+  nr = 0;
 #pragma omp for reduction(+:total_g)
     for (unsigned int i = 0; i < M; ++i) {
       int SSum = 0;
@@ -121,6 +123,18 @@ unsigned int calcFitness(const float* P, const float* B, const bool* inout,
       } else {
         fitness[i] = 0.0;
       }
+      // If it hasn't been set here, set it.
+      if (local_max == -1) {
+        local_max = i;
+      }
+
+      // If they're the same, update if i > local_max
+      if (fitness[i] == fitness[local_max]) {
+        if (i > local_max) {
+          local_max = i;
+        }
+      }
+
       if (local_max == -1 || fitness[i] > fitness[local_max]) {
         local_max = i;
       }
@@ -134,15 +148,24 @@ unsigned int calcFitness(const float* P, const float* B, const bool* inout,
 
 #pragma omp critical
 {
-      if (fitness[local_max] > fitness[*max_pos]) {
+    // This is creating a race condition. Make sure to also save the same
+    // max_pos.
+    if (fitness[local_max] == fitness[*max_pos]) {
+      if (local_max > *max_pos) {
         *max_pos = local_max;
       }
-      if (local_max_D > *max_D) {
-        *max_D = local_max_D;
-      }
+    }
+
+    if (fitness[local_max] > fitness[*max_pos]) {
+      *max_pos = local_max;
+    }
+    if (local_max_D > *max_D) {
+      *max_D = local_max_D;
+    }
 } // end critical
 
 } // end omp parallel region
+
     return nr;
 }
 
@@ -178,10 +201,6 @@ int main(int argc, char* argv[]) {
     fprintf(stderr, "usage: %s <file> <outfile> [M]\n", argv[0]);
     return -1;
   }
-
-#pragma omp parallel 
-#pragma omp single
-  printf("Running with %d threads\n", omp_get_num_threads());
 
 //  fprintf(stderr,"Running with %d threads\n", omp_get_max_threads());
 
