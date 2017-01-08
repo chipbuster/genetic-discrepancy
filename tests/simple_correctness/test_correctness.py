@@ -85,9 +85,8 @@ def main(args):
 
     missingFiles = set(testFileList).difference(set(refFileList))
     if missingFiles:
-        print("Some of the files in " + outdir + " are not in " + refdir)
+        print("[WARN]: Some of the files in " + outdir + " are not in " + refdir)
         print(missingFiles)
-        sys.exit(1)
 
     if "-s" in args or "--silent" in args:
         verbose = False
