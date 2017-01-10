@@ -6,8 +6,14 @@ if [ "$1" = "" ]; then
     exit 1
 fi
 
+if hash greadlink 2>/dev/null; then
+  READLINK=greadlink
+else
+  READLINK=readlink
+fi
+
 TESTDIR="$1"
-TESTSCRDIR="$(dirname "$(readlink --canonicalize-existing "$0")")"
+TESTSCRDIR="$(dirname "$($READLINK --canonicalize-existing "$0")")"
 REFDIR="$TESTSCRDIR"/reference_output
 
 "$TESTSCRDIR/test_correctness.py" "$TESTDIR" "$REFDIR"

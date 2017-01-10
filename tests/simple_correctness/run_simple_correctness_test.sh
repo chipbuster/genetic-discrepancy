@@ -6,10 +6,16 @@ if [ "$1" = "" ]; then
     exit 1
 fi
 
-TEST_PROGRAM="$(readlink --canonicalize-existing "$1")"
-DATADIR="$(readlink --canonicalize-existing "$2")"
+if hash greadlink 2>/dev/null; then
+  READLINK=greadlink
+else
+  READLINK=readlink
+fi
+
+TEST_PROGRAM="$($READLINK --canonicalize-existing "$1")"
+DATADIR="$($READLINK --canonicalize-existing "$2")"
 OUTPUT_DIR=/tmp/test_output
-TESTSCRDIR="$(dirname "$(readlink --canonicalize-existing "$0")")" #directory of this script
+TESTSCRDIR="$(dirname "$($READLINK --canonicalize-existing "$0")")" #directory of this script
 
 M=50 #For relatively fast tests!
 
