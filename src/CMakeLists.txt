@@ -23,6 +23,20 @@ set(CMAKE_CXX_STANARD_REQUIRED ON)
 # Use new IN_LIST behavior
 cmake_policy(SET CMP0057 NEW)
 
+# Warnings!
+if(MSVC)
+  # Force to always compile with W4
+  if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
+    string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+  endif()
+else(MSVC)
+  # Update if necessary
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+endif()
+
+
 ################################
 ## CHECK COMPILER INFORMATION ##
 ################################
