@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <cstdint>
 #include <cassert>
 #include <cmath>
 #include <cfloat>
@@ -19,7 +18,7 @@ typedef unsigned int uint;
 #define CLONE_PERC      0.5     // percent of r boxes to clone (nc)
 #define CROSSOVER_PERC  0.6667  // percent of remaining (M - nc) boxes to clone
 #define CROSSOVER_PROB  0.5     // probability to crossover a given dimension
-#define MUTATION_PROB   0.80    // probab
+#define MUTATION_PROB   0.80    // probab$ cd lighttpd-1.4.35-new/
 #define STOPPING_SAME   0.0001
 #define MAX_RUNS        50
 #define MUT_PROB_ONE    0.8     // probability of mutating to a 1
@@ -59,56 +58,6 @@ void genPoints(float *inp, bool *inout, float *outp, bool *out_inout,
 }
 
 /**
-   Calculate inside-boxness for points and boxes. Inputs are:
-
-   pts : An n x d matrix with n points in d-space
-   bxs : An m x d matrix with m boxes in d-space
- inout : A boolean array dicatating whether to use equality or not
-         Passed in from the parent function
-   res : An n x m matrix, the return value (see comments for details)
-   n   : The number n (number of pts)
-   m   : The number m (number of bxs)
-   d   : The number d (dimension of pts/bxs)
-
-   All matrices are assumed to be row-major 1D arrays of the
-   appropriate size.
-
-   Inputs are points and boxes, each in d-dimensional space.
-   The points are just points, given by d numbers. The boxes
-   are assumed to have one corner anchored at the origin and
-   the furthest vertex from the origin is given by a set of d
-   numbers.
-
-   The output is given as a row-major matrix. If the i-th point is
-   inside the j-th box, res[i,j] = 1. Otherwise, it is zero.
- */
-
-void calcInsideBoxPts(const float* const pts,
-                      const float* const bxs,
-                      const bool* const inout,
-                      uint32_t * const res,
-                      int n, int M, int d)
-{
-  // It is important that the size of the return array matches the size of the
-  // input, e.g. if using floats, use uint32_t. If using doubles, use uint64_t
-
-#pragma omp parallel for
-  for (unsigned int i = 0; i < M; ++i) {
-    for (unsigned int j = 0; j < n; ++j) {
-      for (int k = 0; k < d; ++k) {
-        //Question: can this section be SIMD-ified?
-        if (inout[i*d + k]) {
-          res[M * i + j] &= pts[j*d + k] < bxs[i*d + k];
-        } else {
-          res[M * i + j] &= pts[j*d + k] <= bxs[i*d + k];
-        }
-      }
-    }
-  }
-}
-
-
-/**
  * Calculate fitness, according to Shah genetic algorithm:
  *
  * @param P input points, n x d
@@ -125,34 +74,29 @@ void calcInsideBoxPts(const float* const pts,
  * @param max_pos output maximum fitness location
  */
 unsigned int calcFitness(const float* P, const float* B, const bool* inout,
-                         unsigned n, unsigned M, unsigned d, unsigned m,
+                         unsigned int n, unsigned int M, int d, unsigned int m,
                          float* fitness, float *max_D, unsigned int *max_pos) {
 
   double total_g = 0;
   unsigned int nr = 0;
-  uint32_t CSubStore[M*n];
-
-  /* Generate the indicator matrix of whether point i is inside box j
-     in the serial section so that we don't have to worry about e.g.
-     accidentally nesting parallel/simd sections */
-
-  calcInsideBoxPts(P, B, inout, CSubStore, n, M, d);
-
 #pragma omp parallel shared(nr) shared(total_g)
-  {
-    total_g = 0;
-    nr = 0;
-
+{
+  total_g = 0;
+  nr = 0;
 #pragma omp for reduction(+:total_g)
-    for (unsigned int i = 0; i < M; ++i){
-      // Regenerate the SSum variable associated with index i
+    for (unsigned int i = 0; i < M; ++i) {
       int SSum = 0;
-
-#pragma omp simd reduction(+:SSum)
-      for (unsigned int j = 0; j < n; ++j){
-        SSum += CSubStore[M * i + j];
+      for (unsigned int j = 0; j < n; ++j) {
+        bool Csub = true;
+        for (int k = 0; k < d; ++k) {
+          if (inout[i*d + k]) {
+            Csub &= P[j*d + k] < B[i*d + k];
+          } else {
+            Csub &= P[j*d + k] <= B[i*d + k];
+          }
+        }
+        if (Csub) SSum++;
       }
-
       float volume = 1;
       for (int k = 0; k < d; ++k) {
         volume *= B[i*d + k]/m;
@@ -160,8 +104,9 @@ unsigned int calcFitness(const float* P, const float* B, const bool* inout,
       float disc = std::abs(SSum/n - volume);
       fitness[i] = disc;
       total_g += disc;
-    } //end reduction on total_g
+    }
 
+#pragma omp barrier
     int local_max = -1;
     float local_max_D = -1;
 
@@ -194,34 +139,34 @@ unsigned int calcFitness(const float* P, const float* B, const bool* inout,
         local_max = i;
       }
     }
-
 #pragma omp single
-    {
-      *max_pos = 0;
-      *max_D = 0;
-    } // end omp single
+{
+    *max_pos = 0;
+    *max_D = 0;
+} // end omp single
+#pragma omp barrier
 
 #pragma omp critical
-    {
-      // This is creating a race condition. Make sure to also save the same
-      // max_pos.
-      if (fitness[local_max] == fitness[*max_pos]) {
-        if (local_max > *max_pos) {
-          *max_pos = local_max;
-        }
-      }
-
-      if (fitness[local_max] > fitness[*max_pos]) {
+{
+    // This is creating a race condition. Make sure to also save the same
+    // max_pos.
+    if (fitness[local_max] == fitness[*max_pos]) {
+      if (local_max > *max_pos) {
         *max_pos = local_max;
       }
-      if (local_max_D > *max_D) {
-        *max_D = local_max_D;
-      }
-    } // end critical
+    }
 
-  } // end omp parallel region
+    if (fitness[local_max] > fitness[*max_pos]) {
+      *max_pos = local_max;
+    }
+    if (local_max_D > *max_D) {
+      *max_D = local_max_D;
+    }
+} // end critical
 
-  return nr;
+} // end omp parallel region
+
+    return nr;
 }
 
 void moveToNew(float *from, bool *from_inout, float *to, bool *to_inout,
