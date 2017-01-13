@@ -57,6 +57,31 @@ void genPoints(float *inp, bool *inout, float *outp, bool *out_inout,
   if (RANDOM_CHECK) printf("\n");
 }
 
+/*
+ * Do the point mult thiny!
+ */
+
+void calcPointInsideBoxInfo(const float * const pts, const float * const bxs,
+                            const bool * const inout,
+                            unsigned * res,
+                            unsigned n, unsigned M, unsigned d){
+
+// Initialize res to the correct initial value
+
+#pragma omp parallel for
+    for (unsigned int i = 0; i < M; ++i) {
+      for (unsigned int j = 0; j < n; ++j) {
+        for (int k = 0; k < d; ++k) {
+          if (inout[i*d + k]) {
+            res[i * n + j] &= pts[j*d + k] < bxs[i*d + k];
+          } else {
+            res[i * n + j] &= pts[j*d + k] <= bxs[i*d + k];
+          }
+        }
+      }
+    }
+}
+
 /**
  * Calculate fitness, according to Shah genetic algorithm:
  *
@@ -79,25 +104,27 @@ unsigned int calcFitness(const float* P, const float* B, const bool* inout,
 
   double total_g = 0;
   unsigned int nr = 0;
+
+  unsigned* CSStore = new unsigned[M * n];
+  std::fill_n(CSStore, M * n, -1);
+
+  calcPointInsideBoxInfo(P,B,inout,CSStore,n,M,d);
+
 #pragma omp parallel shared(nr) shared(total_g)
 {
   total_g = 0;
   nr = 0;
+
 #pragma omp for reduction(+:total_g)
     for (unsigned int i = 0; i < M; ++i) {
       int SSum = 0;
-      for (unsigned int j = 0; j < n; ++j) {
-        bool Csub = true;
-        for (int k = 0; k < d; ++k) {
-          if (inout[i*d + k]) {
-            Csub &= P[j*d + k] < B[i*d + k];
-          } else {
-            Csub &= P[j*d + k] <= B[i*d + k];
-          }
-        }
-        if (Csub) SSum++;
-      }
       float volume = 1;
+
+#pragma omp simd reduction(+:SSum)
+      for(unsigned j = 0; j < n; j++){
+        SSum += CSStore[i * n + j];
+      }
+
       for (int k = 0; k < d; ++k) {
         volume *= B[i*d + k]/m;
       }
@@ -165,6 +192,7 @@ unsigned int calcFitness(const float* P, const float* B, const bool* inout,
 } // end critical
 
 } // end omp parallel region
+    delete[] CSStore;
 
     return nr;
 }
