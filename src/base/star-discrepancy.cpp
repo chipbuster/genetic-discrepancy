@@ -77,96 +77,113 @@ unsigned int calcFitness(const float* P, const float* B, const bool* inout,
                          unsigned int n, unsigned int M, int d, unsigned int m,
                          float* fitness, float *max_D, unsigned int *max_pos) {
 
-  double total_g = 0;
-  unsigned int nr = 0;
-#pragma omp parallel shared(nr) shared(total_g)
+  // Will contain the correct value of nr.
+  int nr;
+  float total_d;
+
+#pragma omp parallel shared(nr, total_d)
 {
-  total_g = 0;
-  nr = 0;
-#pragma omp for reduction(+:total_g)
-    for (unsigned int i = 0; i < M; ++i) {
-      int SSum = 0;
-      for (unsigned int j = 0; j < n; ++j) {
-        bool Csub = true;
-        for (int k = 0; k < d; ++k) {
-          if (inout[i*d + k]) {
-            Csub &= P[j*d + k] < B[i*d + k];
-          } else {
-            Csub &= P[j*d + k] <= B[i*d + k];
-          }
-        }
-        if (Csub) SSum++;
-      }
-      float volume = 1;
+  // Set your own value to be 0.
+  int local_nr = 0;
+  float local_total_d = 0;
+  
+#pragma omp for
+  for (unsigned int i = 0; i < M; ++i) {
+    int SSum = 0;
+    for (unsigned int j = 0; j < n; ++j) {
+      bool Csub = true;
       for (int k = 0; k < d; ++k) {
-        volume *= B[i*d + k]/m;
-      }
-      float disc = std::abs(SSum/n - volume);
-      fitness[i] = disc;
-      total_g += disc;
-    }
-
-#pragma omp barrier
-    int local_max = -1;
-    float local_max_D = -1;
-
-    //Now, calculate the fitness, according to (iii) of Shah
-#pragma omp for reduction(+:nr)
-    for (unsigned int i = 0; i < M; ++i) {
-      // Save the discrepancy before we change it to fitness.
-      if (local_max_D < 0 || fitness[i] > local_max_D) {
-        local_max_D = fitness[i];
-      }
-      if (fitness[i] > 1.0/M*total_g) {
-        fitness[i] = 1.0 / pow(1.f - fitness[i], 2.0);
-        nr++;
-      } else {
-        fitness[i] = 0.0;
-      }
-      // If it hasn't been set here, set it.
-      if (local_max == -1) {
-        local_max = i;
-      }
-
-      // If they're the same, update if i > local_max
-      if (fitness[i] == fitness[local_max]) {
-        if (i > local_max) {
-          local_max = i;
+        if (inout[i*d + k]) {
+          Csub &= P[j*d + k] < B[i*d + k];
+        } else {
+          Csub &= P[j*d + k] <= B[i*d + k];
         }
       }
+      if (Csub) SSum++;
+    }
+    float volume = 1;
+    for (int k = 0; k < d; ++k) {
+      volume *= B[i*d + k]/m;
+    }
+    float disc = std::abs(SSum/n - volume);
+    fitness[i] = disc;
+    local_total_d += disc;
+  }
+  // automatic barrier after each for-loop
 
-      if (local_max == -1 || fitness[i] > fitness[local_max]) {
+#pragma omp critical
+{ 
+  // Sum of the value of total discrepancy
+  total_d += local_total_d;
+}
+#pragma omp barrier
+
+  int local_max = -1;
+  float local_max_D = -1;
+
+  //Now, calculate the fitness, according to (iii) of Shah
+#pragma omp for
+  for (unsigned int i = 0; i < M; ++i) {
+    if (local_max == -1) {
+      local_max = i;
+      // Right now, this represents discrepancy.
+      local_max_D = fitness[i];
+    }
+
+    // Save the discrepancy before we change it to fitness.
+    if (fitness[i] > local_max_D) {
+      local_max_D = fitness[i];
+    }
+    // Change this to fitness.
+    if (fitness[i] > 1.0/M*total_d) {
+      fitness[i] = 1.0 / pow(1.f - fitness[i], 2.0);
+      local_nr++;
+    } else {
+      fitness[i] = 0.0;
+    }
+
+    // If they're the same, update if i > local_max
+    if (fitness[i] == fitness[local_max]) {
+      if (i > local_max) {
         local_max = i;
       }
     }
+
+    if (local_max == -1 || fitness[i] > fitness[local_max]) {
+      local_max = i;
+    }
+  }
 #pragma omp single
 {
-    *max_pos = 0;
-    *max_D = 0;
+  *max_pos = 0;
+  *max_D = 0;
 } // end omp single
 #pragma omp barrier
 
 #pragma omp critical
 {
-    // This is creating a race condition. Make sure to also save the same
-    // max_pos.
-    if (fitness[local_max] == fitness[*max_pos]) {
-      if (local_max > *max_pos) {
-        *max_pos = local_max;
-      }
-    }
-
-    if (fitness[local_max] > fitness[*max_pos]) {
+  // This is creating a race condition. Make sure to also save the same
+  // max_pos.
+  if (fitness[local_max] == fitness[*max_pos]) {
+    if (local_max > *max_pos) {
       *max_pos = local_max;
     }
-    if (local_max_D > *max_D) {
-      *max_D = local_max_D;
-    }
+  }
+
+  if (fitness[local_max] > fitness[*max_pos]) {
+    *max_pos = local_max;
+  }
+  if (local_max_D > *max_D) {
+    *max_D = local_max_D;
+  }
+
+  // Also update the value of nr.
+  nr += local_nr;
 } // end critical
 
 } // end omp parallel region
 
-    return nr;
+  return nr;
 }
 
 void moveToNew(float *from, bool *from_inout, float *to, bool *to_inout,
