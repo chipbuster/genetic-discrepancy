@@ -110,8 +110,8 @@ endif(BUILD_BLIS)
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
 ### Build base code
-add_executable(stardiscrep-noaccel "${PROJECT_SOURCE_DIR}/base/star-discrepancy.cpp")
-add_executable(stardiscrep-noaccel-refact "${PROJECT_SOURCE_DIR}/base/star-discrepancy-refact.cpp")
+add_executable(stardiscrep-noaccel.x "${PROJECT_SOURCE_DIR}/base/star-discrepancy.cpp")
+add_executable(stardiscrep-noaccel-refact.x "${PROJECT_SOURCE_DIR}/base/star-discrepancy-refact.cpp")
 
 ####################
 ## RUN SOME TESTS ##
@@ -120,5 +120,5 @@ add_executable(stardiscrep-noaccel-refact "${PROJECT_SOURCE_DIR}/base/star-discr
 enable_testing()
 
 add_test(base_correctness "${PROJECT_SOURCE_DIR}/../tests/simple_correctness/run_simple_correctness_test.sh"
-  "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/stardiscrep-noaccel-refact"
+  "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/stardiscrep-noaccel-refact.x"
   "${PROJECT_SOURCE_DIR}/../data")
