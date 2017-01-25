@@ -110,17 +110,14 @@ unsigned int calcFitness(const float* P, const float* B, const bool* inout,
 
   calcPointInsideBoxInfo(P,B,inout,CSStore,n,M,d);
 
-#pragma omp parallel shared(nr) shared(total_g)
 {
   total_g = 0;
   nr = 0;
 
-#pragma omp for reduction(+:total_g)
     for (unsigned int i = 0; i < M; ++i) {
       int SSum = 0;
       float volume = 1;
 
-#pragma omp simd reduction(+:SSum)
       for(unsigned j = 0; j < n; j++){
         SSum += CSStore[i * n + j];
       }
@@ -133,12 +130,10 @@ unsigned int calcFitness(const float* P, const float* B, const bool* inout,
       total_g += disc;
     }
 
-#pragma omp barrier
     int local_max = -1;
     float local_max_D = -1;
 
     //Now, calculate the fitness, according to (iii) of Shah
-#pragma omp for reduction(+:nr)
     for (unsigned int i = 0; i < M; ++i) {
       // Save the discrepancy before we change it to fitness.
       if (local_max_D < 0 || fitness[i] > local_max_D) {
@@ -166,14 +161,11 @@ unsigned int calcFitness(const float* P, const float* B, const bool* inout,
         local_max = i;
       }
     }
-#pragma omp single
 {
     *max_pos = 0;
     *max_D = 0;
 } // end omp single
-#pragma omp barrier
 
-#pragma omp critical
 {
     // This is creating a race condition. Make sure to also save the same
     // max_pos.
