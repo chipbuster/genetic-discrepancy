@@ -6,7 +6,6 @@
 /* Calculates the number of points that lie inside or outside a given box.
  * All matrices are assumed to be 1D arrays in row-major order.
  *
- *
  * pts: n x d -- Matrix of n points, of d dimensions each. Each point lives in
  *      a row of the given matrix.
  * bxs: M x d -- Matrix of x boxes. Each box has one corner at the origin, the

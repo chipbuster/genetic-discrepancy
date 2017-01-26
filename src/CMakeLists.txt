@@ -123,6 +123,8 @@ add_executable(test-mmult.x "${PROJECT_SOURCE_DIR}/base/geneticutility" "${PROJE
 
 enable_testing()
 
-add_test(base_correctness "${PROJECT_SOURCE_DIR}/../tests/simple_correctness/run_simple_correctness_test.sh"
+add_test(base_correctness "${PROJECT_SOURCE_DIR}/tests/simple_correctness/run_simple_correctness_test.sh"
   "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/stardiscrep-noaccel-refact.x"
-  "${PROJECT_SOURCE_DIR}/../tests/simple_correctness/input_data")
+  "${PROJECT_SOURCE_DIR}/tests/simple_correctness/input_data")
+
+add_test(mmult_unit "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test-mmult.x" 100)

@@ -62,18 +62,18 @@ int main(int argc, char** argv){
   int numTrials = atoi(argv[1]);
 
   // Matrix dimensions
-  unsigned n = 500;
-  unsigned m = 500;
+  unsigned n = 1000;
+  unsigned m = 1000;
   unsigned d = 100;
 
   // Inputs to the algorithm
-  float pts[n * d];
-  float bxs[m * d];
-  bool inout[m * d];
+  float* pts = new float[n * d];
+  float* bxs = new float[m * d];
+  bool* inout = new bool[m * d];
 
   // Outputs, one for each version
-  unsigned resUnaccel[n * m];
-  unsigned resAccel[n * m];
+  unsigned* resUnaccel = new unsigned[n * m];
+  unsigned* resAccel   = new unsigned[n * m];
 
   for(int i = 0; i < numTrials; i++){
     initMatrices(pts, bxs, inout, n, m, d);
@@ -87,6 +87,12 @@ int main(int argc, char** argv){
   }
 
   cout << "[PASS]: Matrix multiplication function" << endl;
+
+  delete[] pts;
+  delete[] bxs;
+  delete[] inout;
+  delete[] resUnaccel;
+  delete[] resAccel;
 
   return 0;
 }
