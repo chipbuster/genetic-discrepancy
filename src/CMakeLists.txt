@@ -110,8 +110,7 @@ endif(BUILD_BLIS)
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
 ### Build base code
-add_executable(stardiscrep-noaccel.x "${PROJECT_SOURCE_DIR}/base/star-discrepancy.cpp")
-add_executable(stardiscrep-noaccel-refact.x "${PROJECT_SOURCE_DIR}/base/star-discrepancy-refact.cpp")
+add_executable(stardiscrep-noaccel-refact.x "${PROJECT_SOURCE_DIR}/base/star-discrepancy-refact.cpp" "${PROJECT_SOURCE_DIR}/base/geneticutility.cpp")
 
 ####################
 ## RUN SOME TESTS ##

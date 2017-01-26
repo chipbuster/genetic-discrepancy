@@ -11,6 +11,8 @@
 #include <random> // random numbers
 #include <sstream>
 
+#include "geneticutility.h"
+
 #include "timer.h"
 
 typedef unsigned int uint;
@@ -55,31 +57,6 @@ void genPoints(float *inp, bool *inout, float *outp, bool *out_inout,
     }
   }
   if (RANDOM_CHECK) printf("\n");
-}
-
-/*
- * Do the point mult thingy!
- */
-
-void calcPointInsideBoxInfo(const float * const pts, const float * const bxs,
-                            const bool * const inout,
-                            unsigned * res,
-                            unsigned n, unsigned M, unsigned d){
-
-// Initialize res to the correct initial value
-
-#pragma omp parallel for
-    for (unsigned int i = 0; i < M; ++i) {
-      for (unsigned int j = 0; j < n; ++j) {
-        for (int k = 0; k < d; ++k) {
-          if (inout[i*d + k]) {
-            res[i * n + j] &= pts[j*d + k] < bxs[i*d + k];
-          } else {
-            res[i * n + j] &= pts[j*d + k] <= bxs[i*d + k];
-          }
-        }
-      }
-    }
 }
 
 /**
@@ -236,24 +213,8 @@ int main(int argc, char* argv[]) {
   }
 
   START_TIMER(cpp);
-  FILE* inf = fopen(argv[1], "r");
-
-  if (!inf) {
-    perror("Could not open input file");
-    return -2;
-  }
-  // All values read from the input file.
-  unsigned int m, d, n;
-  fscanf(inf, "%d %d %d", &m, &d, &n);
-  float* P = new float[n*d];
-  for (unsigned int i = 0; i < n; ++i) {
-    for (unsigned int j = 0; j < d; ++j) {
-      unsigned int temp;
-      fscanf(inf, "%d", &temp);
-      P[i*d + j] = temp;
-    }
-  }
-  fclose(inf);
+  unsigned m, d, n;
+  float* P = readInputFile(argv[1], m, d, n);
   STOP_TIMER(cpp);
   fprintf(stderr,"Number of samples: %u, with dimension: %u, and max: %u\n", n, d, m);
   PRINT_TIMER(cpp,"Reading samples in");
