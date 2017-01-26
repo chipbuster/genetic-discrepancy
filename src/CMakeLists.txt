@@ -121,4 +121,4 @@ enable_testing()
 
 add_test(base_correctness "${PROJECT_SOURCE_DIR}/../tests/simple_correctness/run_simple_correctness_test.sh"
   "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/stardiscrep-noaccel-refact.x"
-  "${PROJECT_SOURCE_DIR}/../data")
+  "${PROJECT_SOURCE_DIR}/../tests/simple_correctness/input_data")
