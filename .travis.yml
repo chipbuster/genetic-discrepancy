@@ -1,0 +1,49 @@
+# Force enabling of Ubuntu 14.04
+sudo: required
+dist: trusty
+
+before_install:
+    # Need to install CMake v3.2 to get C++11 features
+    - sudo apt-get install -y software-properties-common
+    - sudo add-apt-repository -y ppa:george-edison55/cmake-3.x
+    - sudo apt-get update
+    - sudo apt-get install cmake
+
+    - sudo apt-get install -y m4 build-essential gfortran 
+
+    # Ubuntu does not provide libboost_thread-mt because fuck you that's why
+    # We need to link libboost_thread-mt to libboost_thread to fix this.
+    #- sudo ln -s /usr/lib/x86_64-linux-gnu/libboost_thread.so /usr/lib/x86_64-linux-gnu/libboost_thread-mt.so
+    #- sudo ln -s /usr/lib/x86_64-linux-gnu/libboost_thread.a /usr/lib/x86_64-linux-gnu/libboost_thread-mt.a
+
+# Enable C++ support
+# Note: this doesn't appear to actually use the specified compilers
+# but it means that the compilers that are actually used end up
+# being fresh enough (g4.8+ and c3.5+) that c++11 will mostly
+# compile.
+language: cpp
+matrix:
+  include:
+    - compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-5
+      env: COMPILER=g++-5
+    - compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.7
+          packages:
+            - clang-3.7
+      env: COMPILER=clang++-3.7
+# Build steps
+script:
+  - mkdir build
+  - cd build
+  - cmake ../src -DBUILD_BLIS=OFF -DCMAKE_CXX_FLAGS=-O3 && make
+  - make test
