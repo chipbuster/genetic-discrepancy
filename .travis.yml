@@ -5,10 +5,11 @@ dist: trusty
 before_install:
     # Need to install CMake v3.3 to get C++11 features
     - sudo apt-get install -y software-properties-common
-    - wget https://cmake.org/files/v3.7/cmake-3.7.2-Linux-x86_64.sh
-    - sudo ./cmake-3.7.2-Linux-x86_64.sh
+    - wget https://cmake.org/files/v3.7/cmake-3.7.2-Linux-x86_64.tar.gz
+    - tar xf cmake-3.7.2-Linux-x86_64.tar.gz
+    - export PATH=$PATH:$PWD/cmake-3.7.2-Linux-x86_64/bin
 
-    - sudo apt-get install -y m4 build-essential gfortran 
+    - sudo apt-get install -y m4 build-essential
 
     # Ubuntu does not provide libboost_thread-mt because fuck you that's why
     # We need to link libboost_thread-mt to libboost_thread to fix this.
