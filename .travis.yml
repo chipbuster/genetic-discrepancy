@@ -46,4 +46,4 @@ script:
   - mkdir build
   - cd build
   - cmake ../src -DBUILD_BLIS=OFF -DCMAKE_CXX_FLAGS=-O3 && make
-  - make test
+  - ctest -V
