@@ -5,6 +5,7 @@
 
 #include "geneticutility.h"
 #include "accelmult.h"
+#include "transposemat.h"
 
 using namespace std;
 
@@ -70,7 +71,7 @@ int main(int argc, char** argv){
   float* pts = new float[n * d];
   float* bxs = new float[m * d];
   bool* inout = new bool[m * d];
-
+ 
   // Outputs, one for each version
   unsigned* resUnaccel = new unsigned[n * m];
   unsigned* resAccel   = new unsigned[n * m];
@@ -78,8 +79,14 @@ int main(int argc, char** argv){
   for(int i = 0; i < numTrials; i++){
     initMatrices(pts, bxs, inout, n, m, d);
 
-    accel_calcPointInsideBoxInfo(pts, bxs, inout, resAccel, n, m, d);
     calcPointInsideBoxInfo(pts, bxs, inout, resUnaccel, n, m, d);
+
+    // Transpose matrices for call to accelerated routine
+    rowToColOrder(pts, n, d);
+    rowToColOrder(bxs, m, d);
+    rowToColOrder(inout, m, d);
+    accel_calcPointInsideBoxInfo(pts, bxs, inout, resAccel, n, m, d);
+    colToRowOrder(resAccel, n, m);
 
     bool failed = matricesDiffer(resAccel, resUnaccel, m, n);
     if(failed) return 1;

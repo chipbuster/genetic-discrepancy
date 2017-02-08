@@ -4,7 +4,7 @@
 
 
 /* Calculates the number of points that lie inside or outside a given box.
- * All matrices are assumed to be 1D arrays in row-major order.
+ * All matrices are assumed to be 1D arrays in col-major order.
  *
  * pts: n x d -- Matrix of n points, of d dimensions each. Each point lives in
  *      a row of the given matrix.
@@ -29,10 +29,10 @@ void accel_calcPointInsideBoxInfo(const float * const pts, const float * const b
 for (unsigned int i = 0; i < M; ++i) {
   for (unsigned int j = 0; j < n; ++j) {
     for (int k = 0; k < d; ++k) {
-      if (inout[i*d + k]) {
-        res[i * n + j] &= pts[j*d + k] < bxs[i*d + k];
+      if (inout[k * M + i]) {
+        res[j * M + i] &= pts[k*n + j] < bxs[k*M + i];
       } else {
-        res[i * n + j] &= pts[j*d + k] <= bxs[i*d + k];
+        res[j * M + i] &= pts[k*n + j] <= bxs[k*M + i];
       }
     }
   }

@@ -110,12 +110,16 @@ endif(BUILD_BLIS)
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
 ### Build base code
-add_executable(stardiscrep-noaccel-refact.x "${PROJECT_SOURCE_DIR}/base/star-discrepancy-refact.cpp" "${PROJECT_SOURCE_DIR}/base/geneticutility.cpp")
+add_executable(stardiscrep-noaccel-refact.x
+    "${PROJECT_SOURCE_DIR}/base/star-discrepancy-refact.cpp"
+    "${PROJECT_SOURCE_DIR}/base/geneticutility.cpp")
 
 ############################
 ## BUILD TESTING BINARIES ##
 ############################
-add_executable(test-mmult.x "${PROJECT_SOURCE_DIR}/base/geneticutility" "${PROJECT_SOURCE_DIR}/accel/accelmult.cpp" "${PROJECT_SOURCE_DIR}/tests/mmult_test/test_mmult.cpp")
+add_executable(test-mmult.x "${PROJECT_SOURCE_DIR}/base/geneticutility"
+    "${PROJECT_SOURCE_DIR}/accel/accelmult.cpp"
+    "${PROJECT_SOURCE_DIR}/tests/mmult_test/test_mmult.cpp")
 
 ####################
 ## RUN SOME TESTS ##
