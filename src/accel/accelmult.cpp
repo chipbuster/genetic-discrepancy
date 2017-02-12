@@ -1,6 +1,14 @@
 #include <iostream>
 #include <cstdio>
 #include "geneticutility.h"
+#include "accelmult.h"
+
+// For making things go fast
+#include <omp.h>
+#include <bl_config.h>
+#include <bl_dgemm_kernel.h>
+#include <bl_dgemm.h>
+
 
 
 /* Calculates the number of points that lie inside or outside a given box.
@@ -38,3 +46,21 @@ for (unsigned int i = 0; i < M; ++i) {
   }
  }
 }
+
+#include <stdio.h>
+#include <immintrin.h> // AVX
+
+#include <bl_dgemm_kernel.h>
+#include <avx_types.h>
+
+void bl_dgemm_asm_kernel(
+                         int       k,
+                         double*   a,
+                         double*   b,
+                         double*   c,
+                         unsigned long long ldc,
+                         aux_t*    data
+                       )
+{
+}
+

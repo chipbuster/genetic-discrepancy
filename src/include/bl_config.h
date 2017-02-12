@@ -63,8 +63,8 @@ extern "C" {
 
 
 //define BL_MICRO_KERNEL bl_dgemm_ukr
-#define BL_MICRO_KERNEL bl_dgemm_int_kernel
-//#define BL_MICRO_KERNEL bl_dgemm_asm_kernel
+//#define BL_MICRO_KERNEL bl_dgemm_int_kernel
+#define BL_MICRO_KERNEL bl_dgemm_asm_kernel
 
 // End extern "C" construct block.
 #ifdef __cplusplus
