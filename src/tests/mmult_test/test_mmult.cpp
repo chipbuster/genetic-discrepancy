@@ -89,11 +89,21 @@ int main(int argc, char** argv){
     colToRowOrder(resAccel, n, m);
 
     bool failed = matricesDiffer(resAccel, resUnaccel, m, n);
+
+    unsigned ct1 = 0;
+    unsigned ct2 = 0;
+    for(int i = 0; i < n * m; i++){
+      ct1 += resAccel[i] != 0;
+      ct2 += resUnaccel[i] != 0;
+    }
+
+    cout << ct1 << " " << ct2 << endl;
+
     if(failed) return 1;
 
   }
 
-  cout << "[PASS]: Matrix multiplication function" << endl;
+  cout << "[PASS]: Matrix multiplication function on " << numTrials << " tests." << endl;
 
   delete[] pts;
   delete[] bxs;

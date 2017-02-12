@@ -117,7 +117,7 @@ add_executable(stardiscrep-noaccel-refact.x
 ############################
 ## BUILD TESTING BINARIES ##
 ############################
-add_executable(test-mmult.x "${PROJECT_SOURCE_DIR}/base/geneticutility"
+add_executable(test-mmult.x "${PROJECT_SOURCE_DIR}/base/geneticutility.cpp"
     "${PROJECT_SOURCE_DIR}/accel/accelmult.cpp"
     "${PROJECT_SOURCE_DIR}/tests/mmult_test/test_mmult.cpp")
 
