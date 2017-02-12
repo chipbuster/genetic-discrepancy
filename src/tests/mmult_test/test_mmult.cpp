@@ -12,10 +12,8 @@ using namespace std;
 // pts is n * d, bxs is M x d, inout is M * d
 // Fill these matrices with randomly generated values
 void initMatrices(float* pts, float* bxs, bool* inout,
-                 unsigned n, unsigned M, unsigned d){
-
-  std::mt19937 gen;
-  // gen.seed(0);
+                 unsigned n, unsigned M, unsigned d,
+                  std::mt19937& gen){
 
   std::uniform_real_distribution<float> realDist(0.0, 1.0);
   std::uniform_int_distribution<unsigned> boolDist(0,1);
@@ -61,11 +59,14 @@ int main(int argc, char** argv){
   }
 
   int numTrials = atoi(argv[1]);
+  std::mt19937 gen;
+  gen.seed(0);
+
 
   // Matrix dimensions
   unsigned n = 1000;
   unsigned m = 1000;
-  unsigned d = 100;
+  unsigned d = 10;
 
   // Inputs to the algorithm
   float* pts = new float[n * d];
@@ -77,7 +78,7 @@ int main(int argc, char** argv){
   unsigned* resAccel   = new unsigned[n * m];
 
   for(int i = 0; i < numTrials; i++){
-    initMatrices(pts, bxs, inout, n, m, d);
+    initMatrices(pts, bxs, inout, n, m, d, gen);
 
     calcPointInsideBoxInfo(pts, bxs, inout, resUnaccel, n, m, d);
 
@@ -87,6 +88,15 @@ int main(int argc, char** argv){
     rowToColOrder(inout, m, d);
     accel_calcPointInsideBoxInfo(pts, bxs, inout, resAccel, n, m, d);
     colToRowOrder(resAccel, n, m);
+
+    unsigned ctr1 = 0;
+    unsigned ctr2 = 0;
+    for(int i = 0; i  < m * n; i++){
+      if(resAccel[i] > 0) ctr1++;
+      if(resUnaccel[i] > 0) ctr2++;
+    }
+    cout << ctr1 << " " << ctr2 << endl;
+
 
     bool failed = matricesDiffer(resAccel, resUnaccel, m, n);
     if(failed) return 1;
