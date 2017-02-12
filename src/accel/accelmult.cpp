@@ -44,11 +44,11 @@ for(int i = 0; i < M * n; i++){
 for (unsigned int i = 0; i < M; ++i) {
   for (unsigned int j = 0; j < n; ++j) {
     for (int k = 0; k < d; ++k) {
-//      if (inout[k * M + i]) {
-        res[j * M + i] &= pts[k*n + j] < bxs[k*M + i];
-//      } else {
-//        res[j * M + i] &= pts[k*n + j] <= bxs[k*M + i];
-//      }
+      if (inout[k * M + i]) {
+      res[j * M + i] &= pts[k*n + j] < bxs[k*M + i];
+      } else {
+        res[j * M + i] &= pts[k*n + j] <= bxs[k*M + i];
+      }
     }
   }
  }
