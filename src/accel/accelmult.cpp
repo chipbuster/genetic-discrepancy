@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdio>
+#include <climits>
 #include "geneticutility.h"
 #include "accelmult.h"
 
@@ -33,34 +34,23 @@ void accel_calcPointInsideBoxInfo(const float * const pts, const float * const b
                             unsigned * res,
                             unsigned n, unsigned M, unsigned d){
 
+// Apparently the user cannot be trusted to initialize memory correctly.
+// This might be removed for raw speed testing.
+for(int i = 0; i < M * n; i++){
+   res[i] = UINT_MAX;
+}
+
 #pragma omp parallel for
 for (unsigned int i = 0; i < M; ++i) {
   for (unsigned int j = 0; j < n; ++j) {
     for (int k = 0; k < d; ++k) {
-      if (inout[k * M + i]) {
+//      if (inout[k * M + i]) {
         res[j * M + i] &= pts[k*n + j] < bxs[k*M + i];
-      } else {
-        res[j * M + i] &= pts[k*n + j] <= bxs[k*M + i];
-      }
+//      } else {
+//        res[j * M + i] &= pts[k*n + j] <= bxs[k*M + i];
+//      }
     }
   }
  }
-}
-
-#include <stdio.h>
-#include <immintrin.h> // AVX
-
-#include <bl_dgemm_kernel.h>
-#include <avx_types.h>
-
-void bl_dgemm_asm_kernel(
-                         int       k,
-                         double*   a,
-                         double*   b,
-                         double*   c,
-                         unsigned long long ldc,
-                         aux_t*    data
-                       )
-{
 }
 

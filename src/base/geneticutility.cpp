@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdio>
+#include <climits>
 #include "geneticutility.h"
 
 
@@ -25,6 +26,12 @@ void calcPointInsideBoxInfo(const float * const pts, const float * const bxs,
                             const bool * const inout,
                             unsigned * res,
                             unsigned n, unsigned M, unsigned d){
+
+// Apparently the user cannot be trusted to initialize memory correctly.
+// This might be removed for raw speed testing.
+for(int i = 0; i < M * n; i++){
+   res[i] = UINT_MAX;
+}
 
 #pragma omp parallel for
 for (unsigned int i = 0; i < M; ++i) {

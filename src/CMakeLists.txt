@@ -119,7 +119,10 @@ add_executable(stardiscrep-noaccel-refact.x
 ############################
 add_executable(test-mmult.x "${PROJECT_SOURCE_DIR}/base/geneticutility"
     "${PROJECT_SOURCE_DIR}/accel/accelmult.cpp"
-    "${PROJECT_SOURCE_DIR}/tests/mmult_test/test_mmult.cpp")
+    "${PROJECT_SOURCE_DIR}/tests/mmult_test/test_mmult.cpp"
+    "${PROJECT_SOURCE_DIR}/accel/bl_dgemm_asm_kernel.c"
+    "${PROJECT_SOURCE_DIR}/accel/bl_dgemm_util.c"
+    )
 
 ####################
 ## RUN SOME TESTS ##
