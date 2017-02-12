@@ -62,6 +62,7 @@ int main(int argc, char** argv){
   std::mt19937 gen;
   gen.seed(0);
 
+  unsigned num_wrong = 0;
 
   // Matrix dimensions
   unsigned n = 1000;
@@ -99,11 +100,15 @@ int main(int argc, char** argv){
 
 
     bool failed = matricesDiffer(resAccel, resUnaccel, m, n);
-    if(failed) return 1;
+    if(failed) num_wrong++;
 
   }
-
-  cout << "[PASS]: Matrix multiplication function" << endl;
+  
+  if(num_wrong == 0){
+    cout << "[PASS]: Matrix multiplication function" << endl;
+  }else{
+    cout << "[FAIL]: There were " << num_wrong << " wrong answers." << endl;
+  }
 
   delete[] pts;
   delete[] bxs;
