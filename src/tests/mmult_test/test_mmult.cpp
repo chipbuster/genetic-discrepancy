@@ -53,8 +53,8 @@ bool matricesDiffer(const unsigned* const matA, const unsigned* const matB,
 }
 
 int main(int argc, char** argv){
-  if (argc != 2){
-    cerr << "Usage: " << argv[0] << " numtests" << endl;
+  if (argc != 4){
+    cerr << "Usage: " << argv[0] << " numtests numboxen dim" <<  endl;
     return -1;
   }
 
@@ -65,9 +65,9 @@ int main(int argc, char** argv){
   unsigned num_wrong = 0;
 
   // Matrix dimensions
-  unsigned n = 1000;
-  unsigned m = 1000;
-  unsigned d = 10;
+  unsigned n = atoi(argv[2]);
+  unsigned m = atoi(argv[2]);
+  unsigned d = atoi(argv[3]);
 
   // Inputs to the algorithm
   float* pts = new float[n * d];
@@ -90,17 +90,12 @@ int main(int argc, char** argv){
     accel_calcPointInsideBoxInfo(pts, bxs, inout, resAccel, n, m, d);
     colToRowOrder(resAccel, n, m);
 
-    unsigned ctr1 = 0;
-    unsigned ctr2 = 0;
-    for(int i = 0; i  < m * n; i++){
-      if(resAccel[i] > 0) ctr1++;
-      if(resUnaccel[i] > 0) ctr2++;
-    }
-    cout << ctr1 << " " << ctr2 << endl;
-
-
     bool failed = matricesDiffer(resAccel, resUnaccel, m, n);
     if(failed) num_wrong++;
+
+    if(i % 10 == 0){
+      cout << "Iteration " << i << endl;
+    }
 
   }
   
@@ -108,6 +103,7 @@ int main(int argc, char** argv){
     cout << "[PASS]: Matrix multiplication function" << endl;
   }else{
     cout << "[FAIL]: There were " << num_wrong << " wrong answers." << endl;
+    return 1;
   }
 
   delete[] pts;
